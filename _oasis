@@ -1,6 +1,6 @@
 OASISFormat: 0.3
 Name:        ocaml-precommit
-Version:     0.0.1
+Version: 0.0.2
 Synopsis:    Perform checks on OCaml code before a commit.
 Authors:     Sylvain Le Gall
 License:     LGPL-2.1 with OCaml linking exception
