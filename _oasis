@@ -1,10 +1,20 @@
 OASISFormat: 0.3
 Name:        ocaml-precommit
 Version:     0.0.1
-Synopsis:    Perform checks on OCaml code before a darcs commit.
+Synopsis:    Perform checks on OCaml code before a commit.
 Authors:     Sylvain Le Gall
 License:     LGPL-2.1 with OCaml linking exception
 Plugins:     DevFiles (0.3), META (0.3), StdFiles (0.3)
+Homepage:    http://forge.ocamlcore.org/projects/ocaml-precommit/
+Description:
+  This program allows to run simple checks on source code quickly. It uses the
+  same error formatting as the OCaml compiler so it is easy to quickfix the
+  error in Vim.
+  .
+  Some of the tests implemented:
+   * line length must be under 80.
+   * no trailing white-spaces.
+   * no tab.
 
 Executable "OCamlPrecommit"
   Path:       src
