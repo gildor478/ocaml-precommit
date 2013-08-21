@@ -1,5 +1,5 @@
 OASISFormat: 0.3
-Name:        ocaml-darcs-precommit
+Name:        ocaml-precommit
 Version:     0.0.1
 Synopsis:    Perform checks on OCaml code before a darcs commit.
 Authors:     Sylvain Le Gall
