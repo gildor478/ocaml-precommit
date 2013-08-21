@@ -1,0 +1,13 @@
+OASISFormat: 0.3
+Name:        ocaml-darcs-precommit
+Version:     0.0.1
+Synopsis:    Perform checks on OCaml code before a darcs commit.
+Authors:     Sylvain Le Gall
+License:     LGPL-2.1 with OCaml linking exception
+Plugins:     DevFiles (0.3), META (0.3), StdFiles (0.3)
+
+Executable "OCamlPrecommit"
+  Path:       src
+  BuildTools: ocamlbuild
+  MainIs:     OCamlPrecommit.ml
+  BuildDepends: unidiff, unix, pcre, fileutils
