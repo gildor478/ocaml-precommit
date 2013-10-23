@@ -1,1 +1,5 @@
 dist
+_build
+setup.log
+setup.data
+OCamlPrecommit.byte
