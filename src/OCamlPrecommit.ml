@@ -36,9 +36,14 @@ let style_checker fn lineno line =
     else if is_makefile then
       extract_pcre "^\t(\t+)" "use more than one \\t for indentation."
 
-let darcs_diff_iter chckr = 
+let vcs_diff_iter chckr = 
   let chn = 
-    Unix.open_process_in "darcs diff -u"
+    if Sys.file_exists "_darcs" then
+      Unix.open_process_in "darcs diff -u"
+    else if Sys.file_exists ".git" then
+      Unix.open_process_in "git diff -u"
+    else 
+      failwith "Cannot identify VCS."
   in
   let udiff =
     UniDiff.parse (Stream.of_channel chn)
@@ -170,4 +175,4 @@ let () =
     if !full then
       full_source_iter style_checker 
     else
-      darcs_diff_iter style_checker
+      vcs_diff_iter style_checker
