@@ -6,6 +6,7 @@ Authors:     Sylvain Le Gall
 License:     LGPL-2.1 with OCaml linking exception
 Plugins:     DevFiles (0.3), META (0.3), StdFiles (0.3)
 Homepage:    http://forge.ocamlcore.org/projects/ocaml-precommit/
+BuildTools: ocamlbuild
 Description:
   This program allows to run simple checks on source code quickly. It uses the
   same error formatting as the OCaml compiler so it is easy to quickfix the
@@ -18,6 +19,16 @@ Description:
 
 Executable "OCamlPrecommit"
   Path:       src
-  BuildTools: ocamlbuild
   MainIs:     OCamlPrecommit.ml
   BuildDepends: unidiff, unix, pcre, fileutils
+
+Executable "test"
+  Path: test
+  MainIs: test.ml
+  BuildDepends: oUnit (>= 2.0.0)
+  Build$: flag(tests)
+  Install: false
+
+Test "main"
+  Command: $test
+  TestTools: test

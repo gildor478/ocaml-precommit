@@ -1,14 +1,4 @@
-default: build
-	cd ../ounit && \
-	  $(CURDIR)/_build/src/OCamlPrecommit.byte --full \
-	    --exclude log-html \
-	    --exclude myocamlbuild.ml \
-	    --exclude setup.ml \
-	    --exclude README.txt \
-	    --exclude INSTALL.txt \
-	    --exclude Makefile \
-	    --exclude configure \
-	    --exclude _tags
+default: test
 
 # OASIS_START
 # DO NOT EDIT (digest: bc1e05bfc8b39b664f29dae8dbd3ebbb)
