@@ -74,7 +74,7 @@ precommit:
 	fi
 
 precommit-full:
-	OCamlPrecommit --full $(PRECOMMIT_ARGS)
+	$(OCAML_PRECOMMIT) --full $(PRECOMMIT_ARGS)
 
 test: precommit
 
