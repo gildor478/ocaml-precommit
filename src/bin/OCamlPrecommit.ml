@@ -1,7 +1,7 @@
 let () =
   let full = ref false in
   let exclude = ref [] in
-  let () = 
+  let () =
     Arg.parse
       [
         "--full",

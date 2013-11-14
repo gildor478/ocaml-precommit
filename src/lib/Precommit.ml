@@ -17,8 +17,8 @@ type error =
 
 let ocaml_err error =
   Printf.sprintf
-    "File \"%s\", line %d, characters %d-%d:\nError:  "
-    error.filename error.lineno error.pos_start error.pos_end
+    "File \"%s\", line %d, characters %d-%d:\nError: %s"
+    error.filename error.lineno error.pos_start error.pos_end error.message
 
 let error_default fn lineno =
   {
@@ -37,7 +37,7 @@ let errf acc error pos_start pos_end error_type fmt =
   Printf.ksprintf (err acc error pos_start pos_end error_type) fmt
 
 let err_pcre acc error line error_type pat str =
-  try 
+  try
     let substr = Pcre.exec ~pat line in
     let (pos_start, pos_end) = Pcre.get_substring_ofs substr 1 in
       err acc error (pos_start + 1) pos_end error_type str
@@ -82,12 +82,12 @@ let style_checker conf acc fn lineno line =
     end
 
 let vcs_diff_iter conf chckr =
-  let chn = 
+  let chn =
     if Sys.file_exists "_darcs" then
       Unix.open_process_in "darcs diff -u"
     else if Sys.file_exists ".git" then
       Unix.open_process_in "git diff -u"
-    else 
+    else
       failwith "Cannot identify VCS."
   in
   let udiff =
@@ -106,13 +106,13 @@ module SetString = Set.Make(String)
 let full_source_iter conf chckr =
   let pwd = FileUtil.pwd () in
 
-  let exclude = 
+  let exclude =
     List.rev_map
       (fun fn -> FilePath.reduce (Filename.concat pwd fn))
       conf.exclude
   in
 
-  let exclude_dirs = 
+  let exclude_dirs =
     List.fold_left
       (fun lst fn ->
          if Sys.file_exists fn && Sys.is_directory fn then
@@ -123,7 +123,7 @@ let full_source_iter conf chckr =
       exclude
   in
 
-  let exclude_files = 
+  let exclude_files =
     List.fold_left
       (fun st fn ->
          if Sys.file_exists fn && not (Sys.is_directory fn) then
@@ -134,8 +134,8 @@ let full_source_iter conf chckr =
       exclude
   in
 
-  let prune fn = 
-    let should_prune = 
+  let prune fn =
+    let should_prune =
       List.exists
         (fun f -> f ())
         [
@@ -151,7 +151,7 @@ let full_source_iter conf chckr =
 
           (* Exclude build and VCS directories. *)
           (fun () ->
-             List.exists 
+             List.exists
                (fun pat ->
                   Pcre.pmatch ~pat:(".*"^pat^".*") fn)
                [
@@ -183,8 +183,8 @@ let full_source_iter conf chckr =
     let chn = open_in fn in
     let lineno = ref 0 in
     let () =
-      try 
-        while true do 
+      try
+        while true do
           let line = input_line chn in
             incr lineno;
             chckr fn !lineno line
@@ -195,7 +195,7 @@ let full_source_iter conf chckr =
       close_in chn
   in
     FileUtil.find
-      (FileUtil.And 
+      (FileUtil.And
          (FileUtil.Is_file,
           FileUtil.Custom prune))
       (FileUtil.pwd ())
@@ -204,7 +204,7 @@ let full_source_iter conf chckr =
 
 let check conf =
   let acc = ref [] in
-  let () = 
+  let () =
     if conf.full then
       full_source_iter conf (style_checker conf acc)
     else

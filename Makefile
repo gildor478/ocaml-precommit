@@ -39,18 +39,15 @@ setup.data:
 
 # OASIS_STOP
 
-OASIS2DEBIAN_ARGS="--distribution wheezy \
-		--executable-name ocaml-precommit"
+OASIS2DEBIAN_ARGS="--distribution wheezy --executable-name ocaml-precommit"
 
-# TODO: package unidiff before.
-#		--debian_pkg --debuild --debian_upload \
-#		--oasis2debian_args '$(OASIS2DEBIAN_ARGS)' \
-#
 deploy:
 	admin-gallu-deploy --verbose \
-		--forge_upload	--forge_group ocaml-precommit --forge_user gildor-admin
+	  --debian_pkg --debuild --debian_upload \
+	  --oasis2debian_args '$(OASIS2DEBIAN_ARGS)' \
+	  --forge_upload	--forge_group ocaml-precommit --forge_user gildor-admin
 	admin-gallu-oasis-increment --use_vcs \
-		--setup_run --setup_args '-setup-update dynamic'
+	  --setup_run --setup_args '-setup-update dynamic'
 
 .PHONY: deploy
 
@@ -86,8 +83,8 @@ test: precommit
 headache:
 	find ./ \
 	  -name _darcs -prune -false \
-	  -name .git -prune -false \
-	  -name .svn -prune -false \
+	  -o -name .git -prune -false \
+	  -o -name .svn -prune -false \
 	  -o -name _build -prune -false \
 	  -o -name dist -prune -false \
 	  -o -name '*[^~]' -type f \
