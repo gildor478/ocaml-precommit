@@ -65,9 +65,10 @@ PRECOMMIT_ARGS= \
 	    --exclude configure \
 	    --exclude _tags
 
+OCAML_PRECOMMIT=_build/src/bin/OCamlPrecommit.byte
 precommit:
-	@if command -v OCamlPrecommit > /dev/null; then \
-	  OCamlPrecommit $(PRECOMMIT_ARGS); \
+	@if [ -e $(OCAML_PRECOMMIT) ]; then \
+	  $(OCAML_PRECOMMIT) $(PRECOMMIT_ARGS); \
 	else \
 	  echo "Skipping precommit checks.";\
 	fi
