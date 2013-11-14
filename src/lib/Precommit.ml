@@ -1,42 +1,87 @@
 
-let full = ref false 
+type conf =
+    {
+      full: bool;
+      exclude: string list;
+    }
 
-let exclude = ref []
+type error =
+    {
+      filename: string;
+      lineno: int;
+      pos_start: int;
+      pos_end: int;
+      message: string;
+      error_type: string;
+    }
 
-let err fn lineno (pos_start, pos_end) fmt =
-  Printf.fprintf stdout 
-    "File \"%s\", line %d, characters %d-%d:\nError:  " 
-    fn lineno pos_start pos_end;
-  Printf.kfprintf 
-    (fun chn -> Printf.fprintf chn "\n%!")
-    stdout fmt
+let ocaml_err error =
+  Printf.sprintf
+    "File \"%s\", line %d, characters %d-%d:\nError:  "
+    error.filename error.lineno error.pos_start error.pos_end
 
-let extract_pcre fn lineno line pat str = 
+let error_default fn lineno =
+  {
+    filename = fn;
+    lineno = lineno;
+    pos_start = 0;
+    pos_end = 0;
+    message = "<none>";
+    error_type = "none";
+  }
+
+let err acc error pos_start pos_end error_type msg =
+  acc := {error with pos_start; pos_end; message = msg; error_type} :: !acc
+
+let errf acc error pos_start pos_end error_type fmt =
+  Printf.ksprintf (err acc error pos_start pos_end error_type) fmt
+
+let err_pcre acc error line error_type pat str =
   try 
     let substr = Pcre.exec ~pat line in
     let (pos_start, pos_end) = Pcre.get_substring_ofs substr 1 in
-      err fn lineno (pos_start + 1, pos_end) "%s" str
+      err acc error (pos_start + 1) pos_end error_type str
   with Not_found ->
     ()
 
-let style_checker fn lineno line =
+let style_checker conf acc fn lineno line =
   let is_ml = Pcre.pmatch ~pat:"\\.mli?$" fn in
   let is_makefile = Filename.basename fn = "Makefile" in
-  let eol = String.length line - 1 in
-  let err pos fmt = err fn lineno pos fmt in
-  let extract_pcre = extract_pcre fn lineno line in
-    ignore "(*";
-    if not !full then
-      extract_pcre "TODO\\s*:\\s*(.*)" "new TODO.";
-    if is_ml && String.length line > 80 then
-      err (80, eol) "line too long (%d > 80)." (String.length line);
-    extract_pcre "(\\s+)$" "line ends with spaces.";
-    if is_ml then
-      extract_pcre "^(\t+)" "use \\t for indentation." 
-    else if is_makefile then
-      extract_pcre "^\t(\t+)" "use more than one \\t for indentation."
 
-let vcs_diff_iter chckr = 
+  let linelen = String.length line in
+  let eol_pos = linelen - 1 in
+
+  let error = error_default fn lineno in
+  let errf pos_start pos_end error_type fmt =
+    errf acc error pos_start pos_end error_type fmt
+  in
+  let err_pcre = err_pcre acc error line in
+
+    (* General section. *)
+    if not conf.full then begin
+      ignore "(*";
+      err_pcre "new_todo"
+        "TODO\\s*:\\s*(.*)" "new TODO.";
+    end;
+    err_pcre "eol_with_space"
+      "(\\s+)$" "line ends with spaces.";
+
+    if is_ml then begin
+      (* .ml file *)
+      if linelen > 80 then
+        errf 80 eol_pos "line_too_long"
+          "line too long (%d > 80)." linelen;
+      err_pcre "tab_indent"
+        "^(\t+)" "use \\t for indentation.";
+
+    end else if is_makefile then begin
+      (* Makefile. *)
+      err_pcre "too_many_tabs"
+        "^\t(\t+)" "use more than one \\t for indentation."
+
+    end
+
+let vcs_diff_iter conf chckr =
   let chn = 
     if Sys.file_exists "_darcs" then
       Unix.open_process_in "darcs diff -u"
@@ -58,13 +103,13 @@ let vcs_diff_iter chckr =
 
 module SetString = Set.Make(String)
 
-let full_source_iter chckr = 
+let full_source_iter conf chckr =
   let pwd = FileUtil.pwd () in
 
   let exclude = 
     List.rev_map
       (fun fn -> FilePath.reduce (Filename.concat pwd fn))
-      !exclude 
+      conf.exclude
   in
 
   let exclude_dirs = 
@@ -157,22 +202,17 @@ let full_source_iter chckr =
       (fun () fn -> iter fn)
       ()
 
-let () =
+let check conf =
+  let acc = ref [] in
   let () = 
-    Arg.parse
-      [
-        "--full",
-        Arg.Set full,
-        " Run on the full source, not only on the new content.";
-
-        "--exclude",
-        Arg.String (fun fn -> exclude := fn :: !exclude),
-        "fn Exclude files and directories.";
-      ]
-      (fun str -> failwith (Printf.sprintf "Don't know what to do with %S" str))
-      "ocaml-precommit: check style before commiting."
-  in
-    if !full then
-      full_source_iter style_checker 
+    if conf.full then
+      full_source_iter conf (style_checker conf acc)
     else
-      vcs_diff_iter style_checker
+      vcs_diff_iter conf (style_checker conf acc)
+  in
+    List.rev !acc
+
+let check_string conf fn str =
+  let acc = ref [] in
+    style_checker conf acc fn 1 str;
+    List.rev !acc

@@ -17,15 +17,20 @@ Description:
    * no trailing white-spaces.
    * no tab.
 
-Executable "OCamlPrecommit"
-  Path:       src
-  MainIs:     OCamlPrecommit.ml
+Library precommit
+  Path: src/lib
+  Modules: Precommit
   BuildDepends: unidiff, unix, pcre, fileutils
+
+Executable "OCamlPrecommit"
+  Path:       src/bin
+  MainIs:     OCamlPrecommit.ml
+  BuildDepends: precommit
 
 Executable "test"
   Path: test
   MainIs: test.ml
-  BuildDepends: oUnit (>= 2.0.0)
+  BuildDepends: oUnit (>= 2.0.0), precommit
   Build$: flag(tests)
   Install: false
 
