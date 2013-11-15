@@ -48,6 +48,45 @@ let style_checker conf acc fn lineno line =
   let is_ml = Pcre.pmatch ~pat:"\\.mli?$" fn in
   let is_makefile = Filename.basename fn = "Makefile" in
 
+  (* TODO: We need a global approach per file to match more things. *)
+  let line =
+    (* Blank string to avoid matching content. *)
+    let in_string = ref false in
+    let is_escaped = ref false in
+    let line' = String.copy line in
+    (* Begin with char blanking. *)
+    let line' = Pcre.replace ~pat:"'[^\\\\]'" ~templ:"' '" line' in
+    let line' = Pcre.replace ~pat:"'\\\\.'" ~templ:"'  '" line' in
+    (* Begin string blanking. *)
+    for i = 0 to (String.length line') - 1 do
+      let c = line'.[i] in
+      let erase =
+        if !is_escaped then begin
+          is_escaped := false;
+          true
+        end else if !in_string then begin
+          match c with
+            | '"' when not !is_escaped ->
+                in_string := false;
+                is_escaped := false;
+                false
+            | '\\' ->
+                is_escaped := true;
+                true
+            | _ ->
+                true
+        end else begin
+          match c with
+            | '"' -> in_string := true; false
+            | _ -> false
+        end
+      in
+      if erase then
+        line'.[i] <- ' '
+    done;
+    line'
+  in
+
   let linelen = String.length line in
   let eol_pos = linelen - 1 in
 
@@ -73,6 +112,10 @@ let style_checker conf acc fn lineno line =
           "line too long (%d > 80)." linelen;
       err_pcre "tab_indent"
         "^(\t+)" "use \\t for indentation.";
+      err_pcre "double_semi_colon"
+        "(;;)$" "Use of semicolon.";
+      err_pcre "missing_space"
+        "([,;])[^ $;]" "Missing space after ',' or ';'.";
 
     end else if is_makefile then begin
       (* Makefile. *)
@@ -214,5 +257,5 @@ let check conf =
 
 let check_string conf fn str =
   let acc = ref [] in
-    style_checker conf acc fn 1 str;
+  let () = style_checker conf acc fn 1 str in
     List.rev !acc
