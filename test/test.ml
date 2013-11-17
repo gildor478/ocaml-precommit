@@ -70,4 +70,14 @@ let () =
         assert_error_type
           "colon_missing_blank_after"
           "val foo:int";
+        assert_no_error
+          "f ~x:1 ()";
+
+        assert_error_type
+          "no_tuple_in_let"
+          "let (x, y) = 1, 2";
+        assert_no_error
+          "let x, y = 1, 2";
+
+
         ()))

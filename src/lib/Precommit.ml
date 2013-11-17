@@ -86,7 +86,7 @@ let err_pcre acc error set_eol line error_type pat
       Array.iter
         (fun substr ->
            if not (exclude substr) then
-             let (abs_pos_start, abs_pos_end) =
+             let abs_pos_start, abs_pos_end =
                Pcre.get_substring_ofs substr 1
              in
              let lineno, pos_start = line_number_of_pos set_eol abs_pos_start in
@@ -186,6 +186,9 @@ let style_checker conf fn content =
                     let before = Pcre.get_substring substr 1 in
                       before.[0] = '~')
         "Missing blank after ':'.";
+      err_pcre "no_tuple_in_let"
+        "let\\s+(\\(.+\\))\\s+="
+        "No need to use a tuple in 'let (...) ='.";
 
     end else if is_makefile then begin
       (* Makefile. *)
