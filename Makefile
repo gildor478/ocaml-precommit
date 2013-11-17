@@ -54,6 +54,7 @@ deploy:
 # Precommit target
 #  Check style of code.
 PRECOMMIT_ARGS= \
+			--verbose \
 	    --exclude myocamlbuild.ml \
 	    --exclude setup.ml \
 	    --exclude README.txt \
@@ -63,14 +64,14 @@ PRECOMMIT_ARGS= \
 	    --exclude _tags
 
 OCAML_PRECOMMIT=_build/src/bin/OCamlPrecommit.byte
-precommit:
+precommit: build
 	@if [ -e $(OCAML_PRECOMMIT) ]; then \
 	  $(OCAML_PRECOMMIT) $(PRECOMMIT_ARGS); \
 	else \
 	  echo "Skipping precommit checks.";\
 	fi
 
-precommit-full:
+precommit-full: build
 	$(OCAML_PRECOMMIT) --full $(PRECOMMIT_ARGS)
 
 test: precommit

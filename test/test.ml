@@ -3,7 +3,7 @@ open OUnit2
 open Precommit
 
 let assert_error_type error_type str =
-  let conf = { full = false; exclude = [] } in
+  let conf = {full = false; exclude = []; verbose = false} in
   let ml = "foo.ml" in
   let errors = check_string conf ml str in
     match errors with
