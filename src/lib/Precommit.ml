@@ -3,6 +3,7 @@ module MapFilename = Map.Make(String)
 module SetString = Set.Make(String)
 module SetInt = Set.Make(struct type t = int let compare = (-) end)
 
+
 type conf =
     {
       full: bool;
@@ -10,6 +11,7 @@ type conf =
       verbose: bool;
       pwd: string;
     }
+
 
 type error =
     {
@@ -21,6 +23,7 @@ type error =
       error_type: string;
     }
 
+
 let infof conf fmt =
   (* TODO: use a generic logging library. *)
   Printf.ksprintf
@@ -29,10 +32,12 @@ let infof conf fmt =
          prerr_endline ("I: "^str))
     fmt
 
+
 let ocaml_err error =
   Printf.sprintf
     "File \"%s\", line %d, characters %d-%d:\nError: %s"
     error.filename error.lineno error.pos_start error.pos_end error.message
+
 
 let error_default fn lineno =
   {
@@ -44,11 +49,14 @@ let error_default fn lineno =
     error_type = "none";
   }
 
+
 let err acc error pos_start pos_end error_type msg =
   acc := {error with pos_start; pos_end; message = msg; error_type} :: !acc
 
+
 let errf acc error pos_start pos_end error_type fmt =
   Printf.ksprintf (err acc error pos_start pos_end error_type) fmt
+
 
 let set_eol_of_content str =
   let set = ref SetInt.empty in
@@ -57,6 +65,7 @@ let set_eol_of_content str =
         set := SetInt.add i !set
     done;
     !set
+
 
 let line_number_of_pos set_eol pos =
   let eol_before_pos, _, _ = SetInt.split pos set_eol in
@@ -68,6 +77,7 @@ let line_number_of_pos set_eol pos =
       pos - (SetInt.max_elt eol_before_pos)
   in
     lineno, pos'
+
 
 let err_pcre acc error set_eol line error_type pat str =
   try
@@ -83,6 +93,7 @@ let err_pcre acc error set_eol line error_type pat str =
         substr_array
   with Not_found ->
     ()
+
 
 let style_checker conf fn content =
   let is_ml = Pcre.pmatch ~pat:"\\.mli?$" fn in
@@ -102,7 +113,12 @@ let style_checker conf fn content =
       let erase =
         if !is_escaped then begin
           is_escaped := false;
-          true
+          if c = '\n' then begin
+            content'.[i-1] <- '\\';
+            false
+          end else begin
+            true
+          end
         end else if !in_string then begin
           match c with
             | '"' when not !is_escaped ->
@@ -147,10 +163,17 @@ let style_checker conf fn content =
         (".{80}(.+)"^re_eol) "line too long (> 80).";
       err_pcre "tab_indent"
         "^(\t+)" "use \\t for indentation.";
+      ignore "(*";
       err_pcre "double_semi_colon"
         ("(;;\\s*)"^re_eol) "Use of semicolon.";
       err_pcre "missing_space"
         "([,;])[^ ;\\n]" "Missing space after ',' or ';'.";
+      err_pcre "2lines_before_toplevel"
+        "[^\\s]+\\n\\n([^\\s])"
+        "Need two lines before toplevel statements.";
+      err_pcre "2lines_before_toplevel"
+        "[^\\s]+\\n\\n\\n\\n+([^\\s])"
+        "Need two lines before toplevel statements.";
 
     end else if is_makefile then begin
       (* Makefile. *)
@@ -160,14 +183,17 @@ let style_checker conf fn content =
     end;
     List.sort (fun error1 error2 -> error2.lineno - error1.lineno) !acc
 
+
 type line_range =
   | EntireFile
   | Lines of SetInt.t
+
 
 let in_line_range error =
   function
     | EntireFile -> true
     | Lines allowed_lines -> SetInt.mem error.lineno allowed_lines
+
 
 let string_of_line_range =
   function
@@ -196,6 +222,7 @@ let string_of_line_range =
 
 let normalize_filename conf fn =
   FilePath.reduce (Filename.concat conf.pwd fn)
+
 
 let vcs_diff_line_ranges conf =
   let chn =
@@ -230,6 +257,7 @@ let vcs_diff_line_ranges conf =
     MapFilename.map
       (fun allowed_lines -> Lines allowed_lines)
       allowed_file_with_line_ranges
+
 
 let full_source_line_ranges conf =
   let exclude =
@@ -311,12 +339,14 @@ let full_source_line_ranges conf =
       (fun map fn -> MapFilename.add fn EntireFile map)
       MapFilename.empty
 
+
 let get_file_content fn =
   let chn = open_in fn in
   let buff = Buffer.create (in_channel_length chn) in
     Buffer.add_channel buff chn (in_channel_length chn);
     close_in chn;
     Buffer.contents buff
+
 
 let check conf =
   let all_sources = full_source_line_ranges conf in
@@ -345,6 +375,7 @@ let check conf =
          in
            List.rev_append acc' acc)
       restricted_sources []
+
 
 let check_string conf fn content =
   List.rev (style_checker conf fn content)

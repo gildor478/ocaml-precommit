@@ -2,6 +2,7 @@
 open OUnit2
 open Precommit
 
+
 let assert_error_type error_type str =
   let conf =
     {full = false; exclude = []; verbose = false; pwd = FileUtil.pwd ()}
@@ -21,10 +22,28 @@ let assert_error_type error_type str =
                "Expected 1 error, got %d errors."
                (List.length errors))
 
+
 let () =
   run_test_tt_main
     ("OCamlPrecommit" >::
      (fun test_ctxt ->
         assert_error_type
           "double_semi_colon"
-          "open Blah;;"))
+          "open Blah;;";
+        assert_error_type
+          "2lines_before_toplevel"
+          "let f x =\n\
+          \  ()\n\
+          \n\
+          let g x =\n\
+          \  ()";
+        assert_error_type
+          "2lines_before_toplevel"
+          "let f x =\n\
+          \  ()\n\
+          \n\
+          \n\
+          \n\
+          let g x =\n\
+          \  ()";
+        ()))
