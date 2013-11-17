@@ -5,7 +5,13 @@ open Precommit
 
 let run_check_string str =
   let conf =
-    {full = false; exclude = []; verbose = false; pwd = FileUtil.pwd ()}
+    {
+      full = false;
+      exclude = [];
+      exclude_error_type = [];
+      verbose = false;
+      pwd = FileUtil.pwd ()
+    }
   in
   let ml = "foo.ml" in
   check_string conf ml str

@@ -1,6 +1,7 @@
 let () =
   let full = ref false in
   let exclude = ref [] in
+  let exclude_error_type = ref [] in
   let verbose = ref false in
   let () =
     Arg.parse
@@ -12,6 +13,11 @@ let () =
         "--exclude",
         Arg.String (fun fn -> exclude := fn :: !exclude),
         "fn Exclude files and directories.";
+
+        "--exclude-error-type",
+        Arg.String (fun error_type ->
+                      exclude_error_type := error_type :: !exclude_error_type),
+        "error_type Exclude some error types.";
 
         "--verbose",
         Arg.Set verbose,
@@ -25,6 +31,7 @@ let () =
       {Precommit.
        full = !full;
        exclude = !exclude;
+       exclude_error_type = !exclude_error_type;
        verbose = !verbose;
        pwd = FileUtil.pwd ()}
   in

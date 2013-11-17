@@ -8,6 +8,7 @@ type conf =
     {
       full: bool;
       exclude: string list;
+      exclude_error_type: string list;
       verbose: bool;
       pwd: string;
     }
@@ -35,8 +36,9 @@ let infof conf fmt =
 
 let ocaml_err error =
   Printf.sprintf
-    "File \"%s\", line %d, characters %d-%d:\nError: %s"
+    "File \"%s\", line %d, characters %d-%d:\nError: %s (type: %s)."
     error.filename error.lineno error.pos_start error.pos_end error.message
+    error.error_type
 
 
 let error_default fn lineno =
@@ -365,6 +367,11 @@ let get_file_content fn =
 
 let check conf =
   let all_sources = full_source_line_ranges conf in
+  let set_excluded_error_type =
+    List.fold_left
+      (fun st error_type -> SetString.add error_type st)
+      SetString.empty conf.exclude_error_type
+  in
   let restricted_sources =
     if conf.full then begin
       all_sources
@@ -385,7 +392,9 @@ let check conf =
          in
          let acc' =
            List.filter
-             (fun error -> in_line_range error line_range)
+             (fun error ->
+                in_line_range error line_range &&
+                not (SetString.mem error.error_type set_excluded_error_type))
              (style_checker conf fn (get_file_content fn))
          in
            List.rev_append acc' acc)
