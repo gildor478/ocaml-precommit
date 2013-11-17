@@ -64,4 +64,10 @@ let () =
           "new_todo"
           "TODO: blah";
 
+        assert_error_type
+          "colon_blank_before"
+          "val foo : int";
+        assert_error_type
+          "colon_missing_blank_after"
+          "val foo:int";
         ()))

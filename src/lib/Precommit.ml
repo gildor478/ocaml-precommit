@@ -79,17 +79,21 @@ let line_number_of_pos set_eol pos =
     lineno, pos'
 
 
-let err_pcre acc error set_eol line error_type pat str =
+let err_pcre acc error set_eol line error_type pat
+      ?(exclude=(fun _ -> false)) str =
   try
     let substr_array = Pcre.exec_all ~pat line in
       Array.iter
         (fun substr ->
-           let (abs_pos_start, abs_pos_end) = Pcre.get_substring_ofs substr 1 in
-           let lineno, pos_start = line_number_of_pos set_eol abs_pos_start in
-           (* TODO: this is now possible to have a different lineno for the end.
-            *)
-           let _, pos_end = line_number_of_pos set_eol abs_pos_end in
-             err acc {error with lineno} pos_start pos_end error_type str)
+           if not (exclude substr) then
+             let (abs_pos_start, abs_pos_end) =
+               Pcre.get_substring_ofs substr 1
+             in
+             let lineno, pos_start = line_number_of_pos set_eol abs_pos_start in
+             (* TODO: this is now possible to have a different lineno for the
+              * end.  *)
+             let _, pos_end = line_number_of_pos set_eol abs_pos_end in
+               err acc {error with lineno} pos_start pos_end error_type str)
         substr_array
   with Not_found ->
     ()
@@ -174,6 +178,14 @@ let style_checker conf fn content =
       err_pcre "2lines_before_toplevel"
         "[^\\s]+\\n\\n\\n\\n+([^\\s])"
         "Need two lines before toplevel statements.";
+      err_pcre "colon_blank_before"
+        "(\\s+):[^:=]" "Extra blank before ':'.";
+      err_pcre "colon_missing_blank_after"
+        "(~?\\w+):(\\w|\\\"|\\()"
+        ~exclude:(fun substr ->
+                    let before = Pcre.get_substring substr 1 in
+                      before.[0] = '~')
+        "Missing blank after ':'.";
 
     end else if is_makefile then begin
       (* Makefile. *)
