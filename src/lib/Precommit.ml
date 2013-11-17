@@ -8,6 +8,7 @@ type conf =
       full: bool;
       exclude: string list;
       verbose: bool;
+      pwd: string;
     }
 
 type error =
@@ -193,13 +194,10 @@ let string_of_line_range =
                ranges)
 
 
-let normalize_filename pwd fn =
-  FilePath.reduce (Filename.concat pwd fn)
+let normalize_filename conf fn =
+  FilePath.reduce (Filename.concat conf.pwd fn)
 
 let vcs_diff_line_ranges conf =
-  (* TODO: move pwd in conf. *)
-  let pwd = FileUtil.pwd () in
-
   let chn =
     if Sys.file_exists "_darcs" then
       Unix.open_process_in "darcs diff -u"
@@ -217,7 +215,7 @@ let vcs_diff_line_ranges conf =
       ~with_context:false
       `New
       (fun map fn _ lineno _ ->
-         let fn = normalize_filename pwd fn in
+         let fn = normalize_filename conf fn in
          let previous =
            try
              MapFilename.find fn map
@@ -234,11 +232,8 @@ let vcs_diff_line_ranges conf =
       allowed_file_with_line_ranges
 
 let full_source_line_ranges conf =
-  (* TODO: move pwd in conf. *)
-  let pwd = FileUtil.pwd () in
-
   let exclude =
-    List.rev_map (normalize_filename pwd) conf.exclude
+    List.rev_map (normalize_filename conf) conf.exclude
   in
 
   let exclude_dirs =
@@ -312,7 +307,7 @@ let full_source_line_ranges conf =
       (FileUtil.And
          (FileUtil.Is_file,
           FileUtil.Custom prune))
-      (FileUtil.pwd ())
+      conf.pwd
       (fun map fn -> MapFilename.add fn EntireFile map)
       MapFilename.empty
 

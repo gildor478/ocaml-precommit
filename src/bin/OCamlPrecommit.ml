@@ -25,7 +25,8 @@ let () =
       {Precommit.
        full = !full;
        exclude = !exclude;
-       verbose = !verbose}
+       verbose = !verbose;
+       pwd = FileUtil.pwd ()}
   in
     List.iter
       (fun err ->
