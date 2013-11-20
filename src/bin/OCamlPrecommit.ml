@@ -38,6 +38,6 @@ let () =
     List.iter
       (fun err ->
          Printf.printf "%s\n%!"
-           (Precommit.ocaml_err err))
+           (Precommit.ocaml_error_of_error err))
       lst
 

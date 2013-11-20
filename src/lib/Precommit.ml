@@ -34,9 +34,25 @@ let infof conf fmt =
     fmt
 
 
-let ocaml_err error =
+let ends_with ~suffix str =
+  let sufflen = String.length suffix in
+  let strlen = String.length str in
+  if strlen >= sufflen then
+    (String.sub str (strlen - sufflen) sufflen) = suffix
+  else
+    false
+
+
+let ocaml_error_of_error error =
   Printf.sprintf
     "File \"%s\", line %d, characters %d-%d:\nError: %s (type: %s)."
+    error.filename error.lineno error.pos_start error.pos_end error.message
+    error.error_type
+
+
+let string_of_error error =
+  Printf.sprintf "{%S, lineno: %d, pos_start: %d, pos_end: %d, message: %S, \
+                   error_type: %S}"
     error.filename error.lineno error.pos_start error.pos_end error.message
     error.error_type
 
@@ -175,28 +191,37 @@ let style_checker conf fn content =
       err_pcre "missing_space"
         "([,;])[^ ;\\n]" "Missing space after ',' or ';'.";
       err_pcre "2lines_before_toplevel"
-        "[^\\s]+\\n\\n([^\\s])"
+        "[^\\s]+\\n\\n(let)"
         "Need two lines before toplevel statements.";
       err_pcre "2lines_before_toplevel"
-        "[^\\s]+\\n\\n\\n\\n+([^\\s])"
+        "[^\\s]+\\n\\n\\n\\n+(let)"
         "Need two lines before toplevel statements.";
       err_pcre "colon_blank_before"
-        "(\\s+):[^:=]" "Extra blank before ':'.";
+        "(\\s+):[^:=>]" "Extra blank before ':'.";
       err_pcre "colon_missing_blank_after"
-        "(~?\\w+):(\\w|\\\"|\\()"
+        "([~?]?\\w+):(\\w+\\s*(->)?|\\\"|\\()"
         ~exclude:(fun substr ->
                     let before = Pcre.get_substring substr 1 in
-                      before.[0] = '~')
+                    let after = Pcre.get_substring substr 2 in
+                      before.[0] = '~' || before.[0] = '?' ||
+                      ends_with ~suffix:"->" after)
         "Missing blank after ':'.";
       err_pcre "no_tuple_in_let"
         "let\\s+(\\(.+\\))\\s+="
         "No need to use a tuple in 'let (...) ='.";
-
+      err_pcre "no_blank_begin_struct"
+        "module \\w+ =\\nstruct\\n(\\n+)"
+        "Don't add blank lines at the beginning of a struct.";
+      err_pcre "no_blank_begin_sig"
+        "module \\w+ =\\nsig\\n(\\n+)"
+        "Don't add blank lines at the beginning of a sig.";
+      err_pcre "no_blank_end"
+        "(\\n{2,})\\s*end"
+        "Don't add blank lines before a 'end'.";
     end else if is_makefile then begin
       (* Makefile. *)
       err_pcre "too_many_tabs"
         "^\t(\t+)" "use more than one \\t for indentation."
-
     end;
     List.sort (fun error1 error2 -> error2.lineno - error1.lineno) !acc
 
