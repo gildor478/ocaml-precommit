@@ -7,7 +7,7 @@ module SetInt = Set.Make(struct type t = int let compare = (-) end)
 type conf =
     {
       full: bool;
-      exclude: string list;
+      exclude_files: string list;
       exclude_error_type: string list;
       verbose: bool;
       pwd: string;
@@ -30,8 +30,19 @@ let infof conf fmt =
   Printf.ksprintf
     (fun str ->
        if conf.verbose then
-         prerr_endline ("I: "^str))
+         List.iter
+           (fun str -> prerr_endline ("I: "^str))
+           (Pcre.split ~pat:"\\n" str))
     fmt
+
+
+let starts_with ~prefix str =
+  let preflen = String.length prefix in
+  let strlen = String.length str in
+  if strlen >= preflen then
+    (String.sub str 0 preflen) = prefix
+  else
+    false
 
 
 let ends_with ~suffix str =
@@ -164,6 +175,11 @@ let style_checker conf fn content =
     content'
   in
 
+  let () =
+    infof conf "Content of file '%s' after blanking:" fn;
+    infof conf "%s" content
+  in
+
   let error = error_default fn 0 in
   let acc = ref [] in
   let set_eol = set_eol_of_content content in
@@ -199,7 +215,7 @@ let style_checker conf fn content =
       err_pcre "colon_blank_before"
         "(\\s+):[^:=>]" "Extra blank before ':'.";
       err_pcre "colon_missing_blank_after"
-        "([~?]?\\w+):(\\w+\\s*(->)?|\\\"|\\()"
+        "([~?]?\\w+):([\\w\\.]+\\s*(->)?|\\\"|\\()"
         ~exclude:(fun substr ->
                     let before = Pcre.get_substring substr 1 in
                     let after = Pcre.get_substring substr 2 in
@@ -303,7 +319,7 @@ let vcs_diff_line_ranges conf =
 
 let full_source_line_ranges conf =
   let exclude =
-    List.rev_map (normalize_filename conf) conf.exclude
+    List.rev_map (normalize_filename conf) conf.exclude_files
   in
 
   let exclude_dirs =
@@ -382,21 +398,51 @@ let full_source_line_ranges conf =
       MapFilename.empty
 
 
-let get_file_content fn =
-  let chn = open_in fn in
-  let buff = Buffer.create (in_channel_length chn) in
-    Buffer.add_channel buff chn (in_channel_length chn);
-    close_in chn;
-    Buffer.contents buff
-
-
-let check conf =
-  let all_sources = full_source_line_ranges conf in
+let error_filter_of_conf conf =
+  let list_excluded_files =
+    List.map (normalize_filename conf) conf.exclude_files
+  in
+  let set_excluded_files =
+    List.fold_left
+      (fun st fn -> SetString.add fn st)
+      SetString.empty list_excluded_files
+  in
   let set_excluded_error_type =
     List.fold_left
       (fun st error_type -> SetString.add error_type st)
       SetString.empty conf.exclude_error_type
   in
+    (fun error ->
+       not (SetString.mem error.error_type set_excluded_error_type) &&
+       not (SetString.mem error.filename  set_excluded_files) &&
+       not (List.exists
+              (fun excluded_filename ->
+                 starts_with ~prefix:excluded_filename error.filename)
+              list_excluded_files))
+
+
+let check_string ?error_filter conf fn content =
+  let error_filter =
+    match error_filter with
+      | None -> error_filter_of_conf conf
+      | Some f -> f
+  in
+  List.filter error_filter (List.rev (style_checker conf fn content))
+
+
+let check_file ?error_filter conf fn =
+  let get_file_content fn =
+    let chn = open_in fn in
+    let buff = Buffer.create (in_channel_length chn) in
+      Buffer.add_channel buff chn (in_channel_length chn);
+      close_in chn;
+      Buffer.contents buff
+  in
+    check_string ?error_filter conf fn (get_file_content fn)
+
+
+let check conf =
+  let all_sources = full_source_line_ranges conf in
   let restricted_sources =
     if conf.full then begin
       all_sources
@@ -409,22 +455,17 @@ let check conf =
         (vcs_diff_line_ranges conf)
     end
   in
-    MapFilename.fold
-      (fun fn line_range acc ->
-         let () =
-           infof conf "Analysing file '%s', considering error in %s"
-             fn (string_of_line_range line_range)
-         in
-         let acc' =
-           List.filter
-             (fun error ->
-                in_line_range error line_range &&
-                not (SetString.mem error.error_type set_excluded_error_type))
-             (style_checker conf fn (get_file_content fn))
-         in
-           List.rev_append acc' acc)
-      restricted_sources []
+  let error_filter = error_filter_of_conf conf in
+  List.flatten
+    (MapFilename.fold
+       (fun fn line_range acc ->
+          let () =
+            infof conf "Analysing file '%s', considering error in %s"
+              fn (string_of_line_range line_range)
+          in
+          let error_filter' error =
+            error_filter error && in_line_range error line_range
+          in
+            (check_file ~error_filter:error_filter' conf fn) :: acc)
+       restricted_sources [])
 
-
-let check_string conf fn content =
-  List.rev (style_checker conf fn content)

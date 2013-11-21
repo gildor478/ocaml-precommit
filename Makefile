@@ -54,7 +54,6 @@ deploy:
 # Precommit target
 #  Check style of code.
 PRECOMMIT_ARGS= \
-			--verbose \
 	    --exclude myocamlbuild.ml \
 	    --exclude setup.ml \
 	    --exclude README.txt \

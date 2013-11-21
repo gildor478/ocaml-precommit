@@ -11,7 +11,7 @@ let run_check_string str =
   let conf =
     {
       full = false;
-      exclude = [];
+      exclude_files = [];
       exclude_error_type = [];
       verbose = false;
       pwd = FileUtil.pwd ()
@@ -74,6 +74,8 @@ let () =
         assert_error_type test_ctxt "colon_missing_blank_after" "val foo:int";
         assert_no_error test_ctxt "f ~x:1 ()";
         assert_no_error test_ctxt "val f: ?x:int -> unit -> unit";
+        assert_no_error test_ctxt "val f: x:Foo.t -> unit -> unit";
+        assert_no_error test_ctxt "val f: x:Foo_bar.t -> unit -> unit";
         assert_no_error test_ctxt "val f: x:int -> y:int -> unit -> unit";
         assert_no_error test_ctxt "f :> g";
 
