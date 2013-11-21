@@ -161,6 +161,8 @@ let style_checker conf fn content =
             | '\\' ->
                 is_escaped := true;
                 true
+            | '\n' ->
+                false
             | _ ->
                 true
         end else begin
@@ -170,7 +172,7 @@ let style_checker conf fn content =
         end
       in
       if erase then
-        content'.[i] <- ' '
+        content'.[i] <- '_'
     done;
     content'
   in
