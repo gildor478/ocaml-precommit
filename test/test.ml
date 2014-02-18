@@ -51,6 +51,7 @@ let () =
     ("OCamlPrecommit" >::
      (fun test_ctxt ->
         assert_error_type test_ctxt "double_semi_colon" "open Blah;;";
+        assert_error_type test_ctxt "double_semi_colon" ";;";
         assert_error_type test_ctxt "2lines_before_toplevel"
           "let f x =\n\
           \  ()\n\
@@ -101,5 +102,7 @@ let () =
            \  let bar = 1\n\
            \n\
            end\n";
+
+        assert_no_error test_ctxt "#load \"foo\";;";
 
         ()))
