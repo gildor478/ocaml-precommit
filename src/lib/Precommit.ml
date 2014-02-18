@@ -289,7 +289,7 @@ let vcs_diff_line_ranges conf =
     if Sys.file_exists "_darcs" then
       Unix.open_process_in "darcs diff -u"
     else if Sys.file_exists ".git" then
-      Unix.open_process_in "git diff -u"
+      Unix.open_process_in "git diff -u HEAD"
     else
       failwith "Cannot identify VCS."
   in
