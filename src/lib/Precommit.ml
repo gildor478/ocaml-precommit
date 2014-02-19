@@ -196,6 +196,12 @@ let style_checker conf fn content =
     end;
     err_pcre "eol_with_space"
       ("( +)"^re_eol) "line ends with spaces.";
+    if not (ends_with ~suffix:"\n" content) then begin
+      let end_pos = (String.length content) - 1 in
+      let lineno, pos = line_number_of_pos set_eol end_pos in
+      err acc {error with lineno} pos pos "missing_eol_eof"
+        "Missing \\n at the end of file."
+    end;
 
     if is_ml then begin
       (* .ml file *)

@@ -50,14 +50,14 @@ let () =
   run_test_tt_main
     ("OCamlPrecommit" >::
      (fun test_ctxt ->
-        assert_error_type test_ctxt "double_semi_colon" "open Blah;;";
-        assert_error_type test_ctxt "double_semi_colon" ";;";
+        assert_error_type test_ctxt "double_semi_colon" "open Blah;;\n";
+        assert_error_type test_ctxt "double_semi_colon" ";;\n";
         assert_error_type test_ctxt "2lines_before_toplevel"
           "let f x =\n\
           \  ()\n\
           \n\
           let g x =\n\
-          \  ()";
+          \  ()\n";
         assert_error_type test_ctxt "2lines_before_toplevel"
           "let f x =\n\
           \  ()\n\
@@ -65,23 +65,23 @@ let () =
           \n\
           \n\
           let g x =\n\
-          \  ()";
+          \  ()\n";
 
-        assert_no_error test_ctxt "";
+        assert_no_error test_ctxt "\n";
 
-        assert_error_type test_ctxt "new_todo" "TODO: blah";
+        assert_error_type test_ctxt "new_todo" "TODO: blah\n";
 
-        assert_error_type test_ctxt "colon_blank_before" "val foo : int";
-        assert_error_type test_ctxt "colon_missing_blank_after" "val foo:int";
-        assert_no_error test_ctxt "f ~x:1 ()";
-        assert_no_error test_ctxt "val f: ?x:int -> unit -> unit";
-        assert_no_error test_ctxt "val f: x:Foo.t -> unit -> unit";
-        assert_no_error test_ctxt "val f: x:Foo_bar.t -> unit -> unit";
-        assert_no_error test_ctxt "val f: x:int -> y:int -> unit -> unit";
-        assert_no_error test_ctxt "f :> g";
+        assert_error_type test_ctxt "colon_blank_before" "val foo : int\n";
+        assert_error_type test_ctxt "colon_missing_blank_after" "val foo:int\n";
+        assert_no_error test_ctxt "f ~x:1 ()\n";
+        assert_no_error test_ctxt "val f: ?x:int -> unit -> unit\n";
+        assert_no_error test_ctxt "val f: x:Foo.t -> unit -> unit\n";
+        assert_no_error test_ctxt "val f: x:Foo_bar.t -> unit -> unit\n";
+        assert_no_error test_ctxt "val f: x:int -> y:int -> unit -> unit\n";
+        assert_no_error test_ctxt "f :> g\n";
 
-        assert_error_type test_ctxt "no_tuple_in_let" "let (x, y) = 1, 2";
-        assert_no_error test_ctxt "let x, y = 1, 2";
+        assert_error_type test_ctxt "no_tuple_in_let" "let (x, y) = 1, 2\n";
+        assert_no_error test_ctxt "let x, y = 1, 2\n";
 
         assert_error_type test_ctxt "no_blank_begin_struct"
           "module Foo =\n\
@@ -103,6 +103,7 @@ let () =
            \n\
            end\n";
 
-        assert_no_error test_ctxt "#load \"foo\";;";
+        assert_no_error test_ctxt "#load \"foo\";;\n";
+        assert_error_type test_ctxt "missing_eol_eof" "#load \"foo\";;";
 
         ()))
