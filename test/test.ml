@@ -106,4 +106,8 @@ let () =
         assert_no_error test_ctxt "#load \"foo\";;\n";
         assert_error_type test_ctxt "missing_eol_eof" "#load \"foo\";;";
 
+        assert_no_error test_ctxt "[a; b; c]\n";
+        assert_error_type test_ctxt "extra_space" "[a ; b; c]\n";
+        assert_error_type test_ctxt "missing_space" "[a;b; c]\n";
+
         ()))

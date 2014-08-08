@@ -212,6 +212,8 @@ let style_checker conf fn content =
       ignore "(*";
       err_pcre "double_semi_colon"
         ("^[^#]*(;;\\s*)"^re_eol) "Use of semicolon.";
+      err_pcre "extra_space"
+        " ([,;])" "Extra space before ',' or ';'.";
       err_pcre "missing_space"
         "([,;])[^ ;\\n]" "Missing space after ',' or ';'.";
       err_pcre "2lines_before_toplevel"
