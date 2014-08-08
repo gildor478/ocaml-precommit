@@ -110,4 +110,15 @@ let () =
         assert_error_type test_ctxt "extra_space" "[a ; b; c]\n";
         assert_error_type test_ctxt "missing_space" "[a;b; c]\n";
 
+        assert_no_error test_ctxt "let x = a in ()\n";
+        assert_no_error test_ctxt
+          "let x =\n\
+           \  a\n\
+           in\n\
+           \  ()\n";
+        assert_error_type test_ctxt "let_in_format"
+          "let x = a\n\
+           in\
+           \  ()\n";
+
         ()))

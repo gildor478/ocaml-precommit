@@ -213,9 +213,11 @@ let style_checker conf fn content =
       err_pcre "double_semi_colon"
         ("^[^#]*(;;\\s*)"^re_eol) "Use of semicolon.";
       err_pcre "extra_space"
-        " ([,;])" "Extra space before ',' or ';'.";
+        " ([,;])"
+        "Extra space before ',' or ';'.";
       err_pcre "missing_space"
-        "([,;])[^ ;\\n]" "Missing space after ',' or ';'.";
+        "([,;])[^ ;\\n]"
+        "Missing space after ',' or ';'.";
       err_pcre "2lines_before_toplevel"
         "[^\\s]+\\n\\n(let)"
         "Need two lines before toplevel statements.";
@@ -244,6 +246,10 @@ let style_checker conf fn content =
       err_pcre "no_blank_end"
         "(\\n{2,})\\s*end"
         "Don't add blank lines before a 'end'.";
+      err_pcre "let_in_format"
+        "let .* = .*\\n\\s*(in)"
+        "Use either one line 'for let ... = ... in' or \
+         'let ... = \\n  ....\\nin'.";
     end else if is_makefile then begin
       (* Makefile. *)
       err_pcre "too_many_tabs"
