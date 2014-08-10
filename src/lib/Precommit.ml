@@ -250,6 +250,12 @@ let style_checker conf fn content =
         "let .* = .*\\n\\s*(in)"
         "Use either one line 'for let ... = ... in' or \
          'let ... = \\n  ....\\nin'.";
+      err_pcre "extra_parentheses"
+        "if .* then\\s+(\\()"
+        "You don't need to use parentheses after then.";
+      err_pcre "extra_parentheses"
+        "else\\s+(\\()"
+        "You don't need to use parentheses after then.";
     end else if is_makefile then begin
       (* Makefile. *)
       err_pcre "too_many_tabs"

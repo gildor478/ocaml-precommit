@@ -97,6 +97,7 @@ let test_files =
     "colon.ml";
     "misc.ml";
     "struct.ml";
+    "ifelse.ml";
   ]
 
 module StringDiff =
