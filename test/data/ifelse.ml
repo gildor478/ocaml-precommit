@@ -1,4 +1,4 @@
-(* TESTS: 7 *)
+(* TESTS: 8 *)
 
 (* ERROR: none *)
 if cond1 then e1 else
@@ -48,4 +48,10 @@ if cond then e1 else
 
 (* ERROR: no_if_unit *)
 if cond then ()
+(* END *)
+
+(* ERROR: none *)
+if cond then
+  (* comment *)
+  e
 (* END *)
