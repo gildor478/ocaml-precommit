@@ -251,8 +251,11 @@ let style_checker conf fn content =
         "Use either one line for 'let ... = ... in' or \
          'let ... = \\n  ....\\nin'.";
       err_pcre "extra_parentheses"
-        "if .* then\\s+(\\()"
+        "if .* then\\s+(\\([^\\)])"
         "You don't need to use parentheses after then.";
+      err_pcre "no_if_unit"
+        "if .* then\\s+(\\(\\))\\s*[^,]"
+        "Replace 'if cond then ()' by 'if not cond then'.";
       err_pcre "extra_parentheses"
         "else\\s+(\\()"
         "You don't need to use parentheses after then.";
