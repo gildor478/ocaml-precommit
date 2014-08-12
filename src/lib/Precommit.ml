@@ -248,7 +248,7 @@ let style_checker conf fn content =
         "Don't add blank lines before a 'end'.";
       err_pcre "let_in_format"
         "let .* = .*\\n\\s*(in)"
-        "Use either one line 'for let ... = ... in' or \
+        "Use either one line for 'let ... = ... in' or \
          'let ... = \\n  ....\\nin'.";
       err_pcre "extra_parentheses"
         "if .* then\\s+(\\()"
